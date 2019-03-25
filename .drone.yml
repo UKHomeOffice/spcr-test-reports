@@ -8,7 +8,6 @@ pipeline:
       event:
         - push
         - pull_request
-        - tag
 
   build:
     image: docker:17.09.1
