@@ -16,7 +16,6 @@ RUN npm install
 
 COPY . .
 
-USER 1000
 EXPOSE 3000
 RUN npm build
 
