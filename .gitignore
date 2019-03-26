@@ -5,5 +5,4 @@ coverage
 .env
 .DS_Store
 build
-bin
 cop-s3-proxy.iml
