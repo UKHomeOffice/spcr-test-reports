@@ -4,10 +4,6 @@ WORKDIR '/app'
 
 RUN addgroup -S app && adduser -S -G app app
 
-#RUN chown -R app:app /app
-#RUN chmod -R 755 /app
-#USER app
-
 COPY package*.json ./
 
 RUN npm install
@@ -23,5 +19,4 @@ USER app
 
 EXPOSE 3000
 
-#CMD ["npm", "start"]
-CMD ["sleep", "1000"]
+CMD ["npm", "start"]
