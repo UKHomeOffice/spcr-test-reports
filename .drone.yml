@@ -56,3 +56,52 @@ pipeline:
     when:
       event: tag
       branch: develop
+
+  deploy_to_dev:
+    image: quay.io/ukhomeofficedigital/kd
+    secrets:
+      - DEV_NAME
+      - DEV_KUBE_NAMESPACE
+      *- DEV_KUBE_SERVER
+      *- DEV_KUBE_TOKEN
+      - DEV_KEYCLOAK_URL
+      - DEV_KEYCLOAK_REALM
+      - DEV_KEYCLOAK_SECRET
+      - DEV_KEYCLOAK_CLIENT_ID
+      - DEV_KEYCLOAK_SESSION_NAME
+      - DEV_EXT_DOMAIN
+      - DEV_WHITELIST
+      - DEV_PORT
+      - DEV_S3_TEST_REPORT_PREFIX
+      - DEV_S3_ACCESS_KEY_ID
+      - DEV_S3_SECRET_ACCESS_KEY
+      - DEV_S3_BUCKET
+      - DEV_S3_SSE_KMS_KEY_ID
+    commands:
+      - export NAME=$${DEV_NAME}
+      - export KUBE_NAMESPACE=$${DEV_KUBE_NAMESPACE}
+      - export KUBE_SERVER=$${DEV_KUBE_SERVER}
+      - export KUBE_TOKEN=$${DEV_KUBE_TOKEN}
+      - export KEYCLOAK_URL=$${DEV_KEYCLOAK_URL}
+      - export KEYCLOAK_REALM=$${DEV_KEYCLOAK_REALM}
+      - export KEYCLOAK_SECRET=$${DEV_KEYCLOAK_SECRET}
+      - export KEYCLOAK_CLIENT_ID=$${DEV_KEYCLOAK_CLIENT_ID}
+      - export KEYCLOAK_SESSION_NAME=$${DEV_KEYCLOAK_SESSION_NAME}
+      - export EXT_DOMAIN=$${DEV_EXT_DOMAIN}
+      - export WHITELIST=$${DEV_WHITELIST}
+      - export IMAGE_TAG=$${DRONE_COMMIT_SHA}
+      - export PORT=$${DEV_PORT}
+      - export S3_TEST_REPORT_PREFIX=$${DEV_S3_TEST_REPORT_PREFIX}
+      - export S3_ACCESS_KEY_ID=$${DEV_S3_ACCESS_KEY_ID}
+      - export S3_SECRET_ACCESS_KEY=$${DEV_S3_SECRET_ACCESS_KEY}
+      - export S3_BUCKET=$${DEV_S3_BUCKET}
+      - export S3_SSE_KMS_KEY_ID=$${DEV_S3_SSE_KMS_KEY_ID}
+      - kd --insecure-skip-tls-verify -f kube/secret.yml
+      - kd --insecure-skip-tls-verify -f kube/network-policy.yml
+      - kd --insecure-skip-tls-verify -f kube/service.yml
+      - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
+      - kd --insecure-skip-tls-verify -f kube/ingress.yml
+    when:
+      branch: master
+      event: push
+
