@@ -62,8 +62,8 @@ pipeline:
     secrets:
       - DEV_NAME
       - DEV_KUBE_NAMESPACE
-      *- DEV_KUBE_SERVER
-      *- DEV_KUBE_TOKEN
+      - DEV_KUBE_SERVER
+      - DEV_KUBE_TOKEN
       - DEV_KEYCLOAK_URL
       - DEV_KEYCLOAK_REALM
       - DEV_KEYCLOAK_SECRET
