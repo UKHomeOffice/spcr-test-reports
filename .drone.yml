@@ -55,7 +55,7 @@ pipeline:
     - docker push $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_SHA}
     when:
       event: tag
-      branch: develop
+      branch: master
 
   deploy_to_dev:
     image: quay.io/ukhomeofficedigital/kd
