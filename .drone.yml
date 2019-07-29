@@ -1,12 +1,12 @@
 pipeline:
-  sonar-scanner:
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
-    when:
-      status:
-        - failure
-        - success
-      event:
-        - push
+#  sonar-scanner:
+#    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
+#    when:
+#      status:
+#        - failure
+#        - success
+#      event:
+#        - push
 
   build:
     image: quay.io/ukhomeofficedigital/drone-docker
@@ -27,7 +27,7 @@ pipeline:
       - DOCKER_USERNAME
       - DOCKER_PASSWORD
     registry: quay.io
-    repo: quay.io/ukhomeofficedigital/$${DOCKER_NAME}
+    repo: quay.io/ukhomeofficedigital/cop-test-reports
     tags:
       - ${DRONE_BUILD_NUMBER}
       - ${DRONE_COMMIT_SHA}
