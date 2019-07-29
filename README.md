@@ -1,7 +1,7 @@
-# COP S3 Proxy
+# COP Test Reports
 
 A very simple web service that authenticates the user with Keycloak and
-provides access to an S3 bucket.
+provides access to an Test Reports in S3 bucket.
 
 ## Running
 
