@@ -102,6 +102,5 @@ pipeline:
       - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
       - kd --insecure-skip-tls-verify -f kube/ingress.yml
     when:
-      branch: master
+#      branch: master
       event: push
-
