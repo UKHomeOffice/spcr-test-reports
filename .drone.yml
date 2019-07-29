@@ -89,7 +89,7 @@ pipeline:
       - export KEYCLOAK_SESSION_NAME=$${DEV_KEYCLOAK_SESSION_NAME}
       - export EXT_DOMAIN=$${DEV_EXT_DOMAIN}
       - export WHITELIST=$${DEV_WHITELIST}
-      - export IMAGE_TAG=$${DRONE_COMMIT_SHA}
+      - export IMAGE_TAG=${DRONE_COMMIT_SHA}
       - export PORT=$${DEV_PORT}
       - export S3_TEST_REPORT_PREFIX=$${DEV_S3_TEST_REPORT_PREFIX}
       - export S3_ACCESS_KEY_ID=$${DEV_S3_ACCESS_KEY_ID}
