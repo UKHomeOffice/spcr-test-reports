@@ -1,12 +1,4 @@
 pipeline:
-#  sonar-scanner:
-#    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
-#    when:
-#      status:
-#        - failure
-#        - success
-#      event:
-#        - push
 
   build:
     image: quay.io/ukhomeofficedigital/drone-docker
@@ -17,7 +9,6 @@ pipeline:
     when:
       event:
         - push
-        - pull_request
         - tag
 
   image_to_quay:
@@ -33,7 +24,7 @@ pipeline:
       - ${DRONE_COMMIT_SHA}
       - latest
     when:
-#      branch: master
+      branch: master
       event: push
 
   deploy_to_dev:
@@ -81,5 +72,5 @@ pipeline:
       - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
       - kd --insecure-skip-tls-verify -f kube/ingress.yml
     when:
-#      branch: master
+      branch: master
       event: push
