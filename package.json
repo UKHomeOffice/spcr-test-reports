@@ -1,5 +1,5 @@
 {
-  "name": "cop-s3-proxy",
+  "name": "cop-test-reports",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -9,11 +9,11 @@
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
+    "express-session": "^1.15.6",
     "http-errors": "~1.6.2",
-    "morgan": "~1.9.0",
-    "pug": "2.0.0-beta11",
-    "s3-proxy": "^1.1.1",
     "keycloak-connect": "^5.0.0",
-    "express-session": "^1.15.6"
+    "morgan": "~1.9.0",
+    "pug": "^2.0.4",
+    "s3-proxy": "^1.1.1"
   }
 }

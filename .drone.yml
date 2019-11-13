@@ -1,58 +1,76 @@
 pipeline:
-  sonar-scanner:
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
-    when:
-      status:
-        - failure
-        - success
-      event:
-        - push
 
   build:
-    image: docker:17.09.1
-    environment:
-      - DOCKER_HOST=tcp://172.17.0.1:2375
+    image: quay.io/ukhomeofficedigital/drone-docker
     secrets:
-      - docker_name
+      - DOCKER_NAME
     commands:
-      - docker build -t $${DOCKER_NAME} .
+      - docker build -t $${DOCKER_NAME}:$${DRONE_COMMIT_SHA} .
     when:
       event:
         - push
-        - pull_request
         - tag
 
   image_to_quay:
-    image: docker:17.09.1
-    environment:
-      - DOCKER_HOST=tcp://172.17.0.1:2375
+    image: quay.io/ukhomeofficedigital/drone-docker
     secrets:
-      - docker_username
-      - docker_password
-      - docker_server
-      - docker_group
-      - docker_name
-    commands:
-    - docker login -u=$${DOCKER_USERNAME} -p=$${DOCKER_PASSWORD} $${DOCKER_SERVER}
-    - docker tag $${DOCKER_NAME} $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_BRANCH}
-    - docker push $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_BRANCH}
+      - DOCKER_NAME
+      - DOCKER_USERNAME
+      - DOCKER_PASSWORD
+    registry: quay.io
+    repo: quay.io/ukhomeofficedigital/cop-test-reports
+    tags:
+      - ${DRONE_BUILD_NUMBER}
+      - ${DRONE_COMMIT_SHA}
+      - latest
     when:
+      branch: master
       event: push
 
-  tag_image_to_quay:
-    image: docker:17.09.1
-    environment:
-      - DOCKER_HOST=tcp://172.17.0.1:2375
+  deploy_to_dev:
+    image: quay.io/ukhomeofficedigital/kd
     secrets:
-      - docker_username
-      - docker_password
-      - docker_server
-      - docker_group
-      - docker_name
+      - DEV_NAME
+      - DEV_KUBE_NAMESPACE
+      - DEV_KUBE_SERVER
+      - DEV_KUBE_TOKEN
+      - DEV_KEYCLOAK_URL
+      - DEV_KEYCLOAK_REALM
+      - DEV_KEYCLOAK_SECRET
+      - DEV_KEYCLOAK_CLIENT_ID
+      - DEV_KEYCLOAK_SESSION_NAME
+      - DEV_EXT_DOMAIN
+      - DEV_WHITELIST
+      - DEV_PORT
+      - DEV_S3_TEST_REPORT_PREFIX
+      - DEV_S3_ACCESS_KEY_ID
+      - DEV_S3_SECRET_ACCESS_KEY
+      - DEV_S3_BUCKET
+      - DEV_S3_SSE_KMS_KEY_ID
     commands:
-    - docker login -u=$${DOCKER_USERNAME} -p=$${DOCKER_PASSWORD} $${DOCKER_SERVER}
-    - docker tag $${DOCKER_NAME} $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_SHA}
-    - docker push $${DOCKER_SERVER}/$${DOCKER_GROUP}/$${DOCKER_NAME}:$${DRONE_COMMIT_SHA}
+      - export NAME=$${DEV_NAME}
+      - export KUBE_NAMESPACE=$${DEV_KUBE_NAMESPACE}
+      - export KUBE_SERVER=$${DEV_KUBE_SERVER}
+      - export KUBE_TOKEN=$${DEV_KUBE_TOKEN}
+      - export KEYCLOAK_URL=$${DEV_KEYCLOAK_URL}
+      - export KEYCLOAK_REALM=$${DEV_KEYCLOAK_REALM}
+      - export KEYCLOAK_SECRET=$${DEV_KEYCLOAK_SECRET}
+      - export KEYCLOAK_CLIENT_ID=$${DEV_KEYCLOAK_CLIENT_ID}
+      - export KEYCLOAK_SESSION_NAME=$${DEV_KEYCLOAK_SESSION_NAME}
+      - export EXT_DOMAIN=$${DEV_EXT_DOMAIN}
+      - export WHITELIST=$${DEV_WHITELIST}
+      - export IMAGE_TAG=${DRONE_COMMIT_SHA}
+      - export PORT=$${DEV_PORT}
+      - export S3_TEST_REPORT_PREFIX=$${DEV_S3_TEST_REPORT_PREFIX}
+      - export S3_ACCESS_KEY_ID=$${DEV_S3_ACCESS_KEY_ID}
+      - export S3_SECRET_ACCESS_KEY=$${DEV_S3_SECRET_ACCESS_KEY}
+      - export S3_BUCKET=$${DEV_S3_BUCKET}
+      - export S3_SSE_KMS_KEY_ID=$${DEV_S3_SSE_KMS_KEY_ID}
+      - kd --insecure-skip-tls-verify -f kube/secret.yml
+      - kd --insecure-skip-tls-verify -f kube/network-policy.yml
+      - kd --insecure-skip-tls-verify -f kube/service.yml
+      - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
+      - kd --insecure-skip-tls-verify -f kube/ingress.yml
     when:
-      event: tag
-      branch: develop
+      branch: master
+      event: push

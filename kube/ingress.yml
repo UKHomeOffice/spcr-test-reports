@@ -1,0 +1,33 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ .NAME }}"
+  labels:
+    stable.k8s.psg.io/kcm.class: "default"
+  annotations:
+    kubernetes.io/ingress.class: "nginx-external"
+    ingress.kubernetes.io/secure-backends: "false"
+    ingress.kubernetes.io/backend-protocol: "HTTP"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/tls-acme: "true"
+    stable.k8s.psg.io/kcm.provider: http  
+    ingress.kubernetes.io/client-body-buffer-size: 512k
+    ingress.kubernetes.io/proxy-buffer-size: 256k
+    ingress.kubernetes.io/proxy-body-size: 16m    
+    ingress.kubernetes.io/whitelist-source-range: {{.WHITELIST}}
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "360s"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "360s"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "360s"
+spec:
+  rules:
+  - host: {{ .NAME }}.{{ .EXT_DOMAIN }}
+    http:
+      paths:
+      - backend:
+          serviceName: "{{ .NAME }}"
+          servicePort: 3000
+  tls:
+    - hosts:
+        - {{ .NAME }}.{{ .EXT_DOMAIN }}
+      secretName: {{ .NAME }}.{{ .EXT_DOMAIN }}-tls

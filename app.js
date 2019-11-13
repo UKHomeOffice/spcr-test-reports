@@ -10,17 +10,17 @@ sessionStore = new session.MemoryStore();
 
 
 var kcConfig = {
-    clientId: process.env.KC_CLIENT_ID,
-    serverUrl: process.env.KC_SERVER_URL,
-    realm: process.env.KC_REALM
+    clientId: process.env.KEYCLOAK_CLIENT_ID,
+    serverUrl: process.env.KEYCLOAK_URL,
+    realm: process.env.KEYCLOAK_REALM
 };
 
 app.use(session({
-    secret: process.env.KC_SESSION_SECRET,
+    secret: process.env.KEYCLOAK_SECRET,
     resave: false,
     saveUninitialized: true,
     store: sessionStore,
-    name: process.env.KC_SESSION_NAME
+    name: process.env.KEYCLOAK_SESSION_NAME
 }));
 var keycloak = new Keycloak({store: sessionStore}, kcConfig);
 
