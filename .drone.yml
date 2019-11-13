@@ -24,7 +24,6 @@ pipeline:
       - ${DRONE_COMMIT_SHA}
       - latest
     when:
-      branch: master
       event: push
 
   deploy_to_dev:
@@ -72,5 +71,4 @@ pipeline:
       - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
       - kd --insecure-skip-tls-verify -f kube/ingress.yml
     when:
-      branch: master
       event: push
