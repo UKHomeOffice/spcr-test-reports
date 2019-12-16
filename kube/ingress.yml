@@ -15,7 +15,7 @@ metadata:
     ingress.kubernetes.io/client-body-buffer-size: 512k
     ingress.kubernetes.io/proxy-buffer-size: 256k
     ingress.kubernetes.io/proxy-body-size: 16m    
-    ingress.kubernetes.io/whitelist-source-range: {{.WHITELIST}}
+#    ingress.kubernetes.io/whitelist-source-range: {{.WHITELIST}}
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "360s"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "360s"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "360s"
