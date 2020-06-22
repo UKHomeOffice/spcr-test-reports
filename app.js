@@ -32,9 +32,7 @@ app.get('/*', keycloak.protect(),  s3Proxy({
     prefix: process.env.S3_TEST_REPORT_PREFIX,
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-    overrideCacheControl: 'max-age=1000',
-    ServerSideEncryption: 'aws:kms',
-    SSEKMSKeyId: process.env.S3_SSE_KMS_KEY_ID
+    overrideCacheControl: 'max-age=1000'
 }));
 
 module.exports = app;
