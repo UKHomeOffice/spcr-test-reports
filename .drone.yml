@@ -41,6 +41,8 @@ pipeline:
     secrets:
       - source: DEV_COP_TEST_REPORTS_NAME
         target: NAME
+      - source: DEV_COP_TEST_REPORTS_URL
+        target: URL
       - source: DEV_KUBE_NAMESPACE_PRIVATE_COP
         target: KUBE_NAMESPACE
       - source: DEV_KUBE_SERVER
