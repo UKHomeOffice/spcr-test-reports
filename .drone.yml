@@ -50,7 +50,7 @@ pipeline:
       - source: DEV_KUBE_TOKEN
         target: KUBE_TOKEN
       - source: DEV_KEYCLOAK_URL
-        target: KEYCLOAK_URL
+        target: DEV_KEYCLOAK_URL
       - source: DEV_KEYCLOAK_REALM
         target: KEYCLOAK_REALM
       - source: DEV_COP_TEST_REPORTS_KEYCLOAK_SECRET
@@ -71,8 +71,11 @@ pipeline:
         target: S3_SECRET_ACCESS_KEY
       - source: DEV_COP_TEST_REPORTS_TEST_REPORT_PREFIX
         target: S3_TEST_REPORT_PREFIX
+      - source: PROTOCOL_HTTPS
+        target: KEYCLOAK_PROTOCOL
     commands:
       - export IMAGE_TAG=${DRONE_COMMIT_SHA}
+      - export KEYCLOAK_URL=$${KEYCLOAK_PROTOCOL}$${DEV_KEYCLOAK_URL}
       - kd --insecure-skip-tls-verify -f kube/secret.yml
       - kd --insecure-skip-tls-verify -f kube/network-policy.yml
       - kd --insecure-skip-tls-verify -f kube/service.yml
