@@ -1,0 +1,128 @@
+---
+kind: pipeline
+type: kubernetes
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: synch_dev_secrets
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/cop-secrets
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: DEV_DRONE_AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: DEV_DRONE_AWS_SECRET_ACCESS_KEY
+    DEPLOY_ENV: dev
+    DRONE_SERVER: https://drone.acp.homeoffice.gov.uk
+    DRONE_TOKEN:
+      from_secret: DRONE_PUBLIC_TOKEN
+  when:
+    event:
+    - promote
+    target:
+    - secrets
+
+- name: build
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/drone-docker
+  commands:
+  - docker build -t cop-test-reports:$${DRONE_COMMIT_SHA} .
+  when:
+    event:
+    - push
+
+- name: image_to_quay
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/drone-docker
+  settings:
+    registry: quay.io
+    repo: quay.io/ukhomeofficedigital/cop-test-reports
+    tags: ${DRONE_COMMIT_SHA}
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: QUAY_PASSWORD
+    DOCKER_USERNAME:
+      from_secret: QUAY_USERNAME
+  when:
+    branch:
+    - master
+    event:
+    - push
+
+- name: deploy_to_dev
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/kd
+  commands:
+  - export IMAGE_TAG=${DRONE_COMMIT_SHA}
+  - export KEYCLOAK_URL=$${KEYCLOAK_PROTOCOL}$${DEV_KEYCLOAK_URL}
+  - kd --insecure-skip-tls-verify -f kube/secret.yml
+  - kd --insecure-skip-tls-verify -f kube/network-policy.yml
+  - kd --insecure-skip-tls-verify -f kube/service.yml
+  - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
+  - kd --insecure-skip-tls-verify -f kube/ingress.yml
+  environment:
+    DEV_KEYCLOAK_URL:
+      from_secret: DEV_KEYCLOAK_URL
+    KEYCLOAK_CLIENT_ID:
+      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_CLIENT_ID
+    KEYCLOAK_PROTOCOL:
+      from_secret: PROTOCOL_HTTPS
+    KEYCLOAK_REALM:
+      from_secret: DEV_KEYCLOAK_REALM
+    KEYCLOAK_SECRET:
+      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SECRET
+    KEYCLOAK_SESSION_NAME:
+      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SESSION_NAME
+    KUBE_NAMESPACE:
+      from_secret: DEV_KUBE_NAMESPACE_PRIVATE_COP
+    KUBE_SERVER:
+      from_secret: DEV_KUBE_SERVER
+    KUBE_TOKEN:
+      from_secret: DEV_KUBE_TOKEN
+    NAME:
+      from_secret: DEV_COP_TEST_REPORTS_NAME
+    PORT:
+      from_secret: DEV_COP_TEST_REPORTS_PORT
+    S3_ACCESS_KEY_ID:
+      from_secret: TESTS_S3_ACCESS_KEY
+    S3_BUCKET:
+      from_secret: TESTS_S3_BUCKET_NAME
+    S3_SECRET_ACCESS_KEY:
+      from_secret: TESTS_S3_SECRET_KEY
+    S3_TEST_REPORT_PREFIX:
+      from_secret: DEV_COP_TEST_REPORTS_TEST_REPORT_PREFIX
+    URL:
+      from_secret: DEV_COP_TEST_REPORTS_URL
+    WHITELIST:
+      from_secret: DEV_WHITELIST
+  when:
+    branch:
+    - master
+    event:
+    - push
+
+- name: notify
+  pull: if-not-exists
+  image: plugins/slack
+  settings:
+    channel: cop-deployments
+    template: "{{#build.deployTo}}\n  *{{repo.name}} - Build {{build.number}} - {{uppercasefirst build.deployTo}} - {{uppercase build.status}}*\n  {{build.link}}\n{{else}}\n  *{{repo.name}} - Build {{build.number}} - Development - {{uppercase build.status}}*\n  {{build.link}}\n{{/build.deployTo}}\n"
+    username: Drone Build Watcher
+  environment:
+    SLACK_WEBHOOK:
+      from_secret: SLACK_WEBHOOK
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - promote
+    status:
+    - success
+    - failure
+
+...
