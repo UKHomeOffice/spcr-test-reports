@@ -32,7 +32,7 @@ steps:
   image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
   commands:
   - n=0; while [ "$n" -lt 60 ] && [ ! docker stats --no-stream ]; do n=$(( n + 1 )); sleep 1; done
-  - docker build -t cop-test-reports:$${DRONE_COMMIT_SHA} .
+  - docker build -t spcr-test-reports:$${DRONE_COMMIT_SHA} .
   when:
     event:
     - push
@@ -41,7 +41,7 @@ steps:
   image: plugins/docker
   settings:
     registry: quay.io
-    repo: quay.io/ukhomeofficedigital/cop-test-reports
+    repo: quay.io/ukhomeofficedigital/spcr-test-reports
     tags: ${DRONE_COMMIT_SHA}
   environment:
     DOCKER_PASSWORD:
@@ -69,15 +69,15 @@ steps:
     DEV_KEYCLOAK_URL:
       from_secret: DEV_KEYCLOAK_URL
     KEYCLOAK_CLIENT_ID:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_CLIENT_ID
+      from_secret: DEV_SPCR_TEST_REPORTS_KEYCLOAK_CLIENT_ID
     KEYCLOAK_PROTOCOL:
       from_secret: PROTOCOL_HTTPS
     KEYCLOAK_REALM:
       from_secret: DEV_KEYCLOAK_REALM
     KEYCLOAK_SECRET:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SECRET
+      from_secret: DEV_SPCR_TEST_REPORTS_KEYCLOAK_SECRET
     KEYCLOAK_SESSION_NAME:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SESSION_NAME
+      from_secret: DEV_SPCR_TEST_REPORTS_KEYCLOAK_SESSION_NAME
     KUBE_NAMESPACE:
       from_secret: DEV_KUBE_NAMESPACE_PRIVATE_COP
     KUBE_SERVER:
@@ -85,9 +85,9 @@ steps:
     KUBE_TOKEN:
       from_secret: DEV_KUBE_TOKEN
     NAME:
-      from_secret: DEV_COP_TEST_REPORTS_NAME
+      from_secret: DEV_SPCR_TEST_REPORTS_NAME
     PORT:
-      from_secret: DEV_COP_TEST_REPORTS_PORT
+      from_secret: DEV_SPCR_TEST_REPORTS_PORT
     S3_ACCESS_KEY_ID:
       from_secret: TESTS_S3_ACCESS_KEY
     S3_BUCKET:
@@ -95,9 +95,9 @@ steps:
     S3_SECRET_ACCESS_KEY:
       from_secret: TESTS_S3_SECRET_KEY
     S3_TEST_REPORT_PREFIX:
-      from_secret: DEV_COP_TEST_REPORTS_TEST_REPORT_PREFIX
+      from_secret: DEV_SPCR_TEST_REPORTS_TEST_REPORT_PREFIX
     URL:
-      from_secret: DEV_COP_TEST_REPORTS_URL
+      from_secret: DEV_SPCR_TEST_REPORTS_URL
     WHITELIST:
       from_secret: DEV_WHITELIST
   when:
