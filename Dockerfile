@@ -8,7 +8,7 @@ RUN apk update && apk upgrade --no-cache && rm -Rf /var/cache/apk/* \
 WORKDIR '/app'
 
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci && npm cache clean --force \
     && chown -R app:app /app \
     && chmod -R 755 /app
 
