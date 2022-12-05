@@ -4,15 +4,16 @@ FROM quay.io/ukhomeofficedigital/cop-node:18-alpine
 RUN apk update && apk upgrade --no-cache && rm -Rf /var/cache/apk/* \
     && mkdir -p /app \
     && addgroup -S app && adduser -S -G app app
+
 WORKDIR '/app'
 
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
-COPY . .
-
-RUN npm run build \
     && chown -R app:app /app \
     && chmod -R 755 /app
+
+COPY . .
+
 USER app
 EXPOSE 3000
 CMD ["npm", "start"]
