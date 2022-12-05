@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci && npm cache clean --force
 COPY . .
 
-RUN npm build \
+RUN npm run build \
     && chown -R app:app /app \
     && chmod -R 755 /app
 USER app
