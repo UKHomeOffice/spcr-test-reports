@@ -1,0 +1,129 @@
+---
+kind: pipeline
+type: kubernetes
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: sync_dev_secrets
+  pull: if-not-exists
+  image: <SECRET_SYNC_IMAGE_URL>
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: DEV_DRONE_AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: DEV_DRONE_AWS_SECRET_ACCESS_KEY
+    DEPLOY_ENV: dev
+    DRONE_SERVER: <DRONE_SERVER_URL>
+    DRONE_TOKEN:
+      from_secret: DEV_DRONE_<PROJECT_NAME>_V1_PUBLIC_TOKEN
+    DRONE_VERSION: ${DRONE_SYSTEM_VERSION}
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: build_container_image
+  pull: always
+  image: <DIND_IMAGE_URL>
+  commands:
+    - /usr/local/bin/wait
+    - docker build -t <PROJECT_NAME>:$${DRONE_COMMIT_SHA} .
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: vulnerability-scan
+  pull: always
+  image: <ANCHORE_SUBMISSION_IMAGE_URL>
+  environment:
+    IMAGE_NAME: <PROJECT_NAME>:${DRONE_COMMIT_SHA}
+    LOCAL_IMAGE: true
+    TOLERATE: low
+    WHITELIST_FILE: whitelist
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: dev_image_to_ecr
+  image: plugins/ecr
+  settings:
+    access_key:
+      from_secret: DEV_NMSW_PROTOTYPE_AWS_ACCESS_KEY_ID
+    registry: <ECR_REGISTRY_BASE_URL>
+    repo: <ECR_REGISTRY_IMAGE_URL>
+    secret_key:
+      from_secret: DEV_<PROJECT_NAME>_AWS_SECRET_ACCESS_KEY
+    tags:
+    - ${DRONE_COMMIT_SHA}
+    - dev
+  environment:
+    AWS_REGION: <AWS_REGION>
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: deploy_to_dev
+  pull: if-not-exists
+  image: <HELM_IMAGE_URL>
+  commands:
+  - /run-helm.sh list -n <PROJECT_NAMESPACE>
+  - helm upgrade --install <PROJECT_NAME> ./helm -f ./helm/dev.yaml -n <PROJECT_NAMESPACE> --dry-run
+  - helm upgrade --install <PROJECT_NAME> ./helm -f ./helm/dev.yaml -n <PROJECT_NAMESPACE>
+  environment:
+    KUBE_CERTIFICATE_AUTHORITY_DATA:
+      from_secret: DEV_<PROJECT_NAME_SHORT>_KUBE_CA_DATA
+    KUBE_CLUSTER_NAME:
+      from_secret: DEV_<PROJECT_NAME_SHORT>_KUBE_CLUSTER_NAME
+    KUBE_SERVER:
+      from_secret: DEV_<PROJECT_NAME_SHORT>_KUBE_SERVER
+    KUBE_TOKEN:
+      from_secret: DEV_<PROJECT_NAME_SHORT>_KUBE_TOKEN
+  when:
+    branch:
+    - main
+    event:
+    - push
+
+- name: notify
+  pull: if-not-exists
+  image: plugins/slack
+  failure: ignore
+  settings:
+    channel: <PROJECT_SLACK_CHANNEL>
+    template: "{{#build.deployTo}}\n  *{{repo.name}} - Build {{build.number}} - {{uppercasefirst build.deployTo}} - {{uppercase build.status}}*\n  {{build.link}}\n{{else}}\n  *{{repo.name}} - Build {{build.number}} - Development - {{uppercase build.status}}*\n  {{build.link}}\n{{/build.deployTo}}\n"
+    username: Drone Build Watcher
+  environment:
+    SLACK_WEBHOOK:
+      from_secret: SLACK_WEBHOOK
+  when:
+    branch:
+    - main
+    - version-*
+    event:
+    - promote
+    - push
+    status:
+    - success
+    - failure
+
+services:
+- name: docker
+  image: <DIND_IMAGE_URL>
+
+- name: anchore-submission-server
+  pull: always
+  image: <ANCHORE_SUBMISSION_IMAGE_URL>
+  commands:
+  - /run.sh server
+...

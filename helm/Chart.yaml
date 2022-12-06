@@ -1,0 +1,7 @@
+apiVersion: v2
+name: sPCR Test Reports
+description: A web application to visualise and view Cypress reports
+type: application
+version: 0.1.0
+# Use appVersion to set the image tag i.e. <PROJECT_NAME>:{appVersion}
+appVersion: 0.1.0

@@ -1,0 +1,103 @@
+# Default values for helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: spcr-dev
+replicaCount: 1
+
+image:
+  repository: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/spcr/test-reports
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "dev"
+  proxyRepository: "nginx-proxy:latest"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+security:
+  application:
+    podSecurityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1000
+  proxy:
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+
+service:
+  type: ClusterIP
+  # Reverse proxy ports for service and container
+  port: &port 443
+  targetPort: 10443
+  # Application port
+  appPort: &appPort 3000
+
+ingress:
+  host: spcr-e2e-tests.dev.spcr.homeoffice.gov.uk
+  path: /
+  pathType: ImplementationSpecific
+  annotations:
+    cert-manager.io/enabled: "true"
+    ingress.kubernetes.io/backend-protocol: "HTTPS"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ingress.class: nginx-external
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 250Mi
+
+probes:
+  readinessProbe:
+    tcpPort:
+      port: *appPort
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
+  livenessProbe:
+    tcpPort:
+      port: *appPort
+    initialDelaySeconds: 30
+    periodSeconds: 3
+    failureThreshold: 3
+
+env:
+  application:
+    - name: EXAMPLE
+      value: "True"
+    - name: FOO
+      value: "bar"
+  proxy:
+  - name: PROXY_SERVICE_HOST
+    value: 'http://127.0.0.1'
+  - name: PROXY_SERVICE_PORT
+    value: "8080"
+  - name: SERVER_CERT
+    value: "/certs/tls.crt"
+  - name: SERVER_KEY
+    value: "/certs/tls.key"
+  - name: LOG_FORMAT_NAME
+    value: 'json'
+  - name: NAXSI_USE_DEFAULT_RULES
+    value: 'FALSE'
+  - name: ENABLE_UUID_PARAM
+    value: 'FALSE'
+  - name: STATSD_METRICS
+    value: "FALSE"
