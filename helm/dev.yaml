@@ -88,7 +88,7 @@ env:
   - name: PROXY_SERVICE_HOST
     value: 'http://127.0.0.1'
   - name: PROXY_SERVICE_PORT
-    value: "8080"
+    value: *appPort
   - name: SERVER_CERT
     value: "/certs/tls.crt"
   - name: SERVER_KEY
