@@ -1,7 +1,7 @@
 apiVersion: v2
-name: sPCR Test Reports
+name: spcr-test-reports
 description: A web application to visualise and view Cypress reports
 type: application
 version: 0.1.0
-# Use appVersion to set the image tag i.e. <PROJECT_NAME>:{appVersion}
+# Use appVersion to set the image tag i.e. spcr/test-reports:{appVersion}
 appVersion: 0.1.0
