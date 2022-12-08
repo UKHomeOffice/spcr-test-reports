@@ -23,7 +23,7 @@ steps:
     DRONE_VERSION: ${DRONE_SYSTEM_VERSION}
   when:
     branch:
-    - main
+    - master
     event:
     - push
 
@@ -35,7 +35,7 @@ steps:
   - docker build -t spcr-test-reports:$${DRONE_COMMIT_SHA} .
   when:
     branch:
-    - main
+    - master
     event:
     - push
 
@@ -49,7 +49,7 @@ steps:
     WHITELIST_FILE: whitelist
   when:
     branch:
-    - main
+    - master
     event:
     - push
 
@@ -69,7 +69,7 @@ steps:
     AWS_REGION: eu-west-2
   when:
     branch:
-    - main
+    - master
     event:
     - push
 
@@ -91,7 +91,7 @@ steps:
       from_secret: DEV_SPCR_KUBE_TOKEN
   when:
     branch:
-    - main
+    - master
     event:
     - push
 
@@ -108,7 +108,7 @@ steps:
   failure: ignore
   when:
     branch:
-    - main
+    - master
     - version-*
     event:
     - promote
