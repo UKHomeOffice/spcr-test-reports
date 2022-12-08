@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 steps:
-- name: synch_dev_secrets
+- name: sync_dev_secrets
   pull: if-not-exists
   image: quay.io/ukhomeofficedigital/cop-secrets
   environment:
