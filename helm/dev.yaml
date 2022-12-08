@@ -46,7 +46,7 @@ service:
   appPort: &appPort 3000
 
 ingress:
-  host: spcr-e2e-tests.dev.spcr.homeoffice.gov.uk
+  host: spcr-test-reports.dev.spcr.homeoffice.gov.uk
   path: /
   pathType: ImplementationSpecific
   annotations:
@@ -80,10 +80,44 @@ probes:
 
 env:
   application:
-    - name: EXAMPLE
-      value: "True"
-    - name: FOO
-      value: "bar"
+    - name: S3_TEST_REPORT_PREFIX
+      value: test-reports
+    - name: KEYCLOAK_SECRET
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_secret
+    - name: PORT
+      value: *appPort
+    - name: S3_BUCKET_NAME
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: name
+    - name: KEYCLOAK_SESSION_NAME
+      value: test_reporting_session
+    - name: S3_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: access_key_id
+    - name: S3_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: secret_access_key
+    - name: DEV_KEYCLOAK_URL
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_url
+    - name: KEYCLOAK_REALM
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_realm
+    - name: KEYCLOAK_CLIENT_ID
+      value: spcr-test-reports
   proxy:
   - name: PROXY_SERVICE_HOST
     value: 'http://127.0.0.1'
