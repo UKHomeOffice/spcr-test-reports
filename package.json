@@ -8,13 +8,13 @@
   "dependencies": {
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
-    "express": "~4.16.0",
+    "express": "~4.17.0",
     "express-session": "^1.15.6",
     "http-errors": "~1.6.2",
     "keycloak-connect": "^5.0.0",
     "morgan": "~1.9.0",
-    "package.json": "^2.0.1",
-    "pug": "^2.0.4",
+    "package.json": "^0.0.0",
+    "pug": "^3.0.2",
     "s3-proxy": "^1.2.1"
   }
 }
