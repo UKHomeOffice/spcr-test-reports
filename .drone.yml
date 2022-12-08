@@ -22,8 +22,6 @@ steps:
       from_secret: DRONE_V1_PUBLIC_TOKEN
     DRONE_VERSION: ${DRONE_SYSTEM_VERSION}
   when:
-    branch:
-    - master
     event:
     - push
 
@@ -34,8 +32,6 @@ steps:
   - /usr/local/bin/wait
   - docker build -t spcr-test-reports:$${DRONE_COMMIT_SHA} .
   when:
-    branch:
-    - master
     event:
     - push
 
@@ -48,8 +44,6 @@ steps:
     TOLERATE: low
     WHITELIST_FILE: whitelist
   when:
-    branch:
-    - master
     event:
     - push
 
