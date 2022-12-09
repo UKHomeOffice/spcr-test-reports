@@ -9,7 +9,7 @@ image:
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "dev"
-  proxyRepository: "nginx-proxy:latest"
+  proxyRepository: "quay.io/ukhomeofficedigital/nginx-proxy:latest"
 
 serviceAccount:
   # Specifies whether a service account should be created
