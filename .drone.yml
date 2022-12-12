@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 steps:
-- name: synch_dev_secrets
+- name: sync_dev_secrets
   pull: if-not-exists
   image: quay.io/ukhomeofficedigital/cop-secrets
   environment:
@@ -23,31 +23,44 @@ steps:
     DRONE_VERSION: ${DRONE_SYSTEM_VERSION}
   when:
     event:
-    - promote
-    target:
-    - secrets
+    - push
 
 - name: build
   pull: always
   image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
   commands:
-  - n=0; while [ "$n" -lt 60 ] && [ ! docker stats --no-stream ]; do n=$(( n + 1 )); sleep 1; done
-  - docker build -t cop-test-reports:$${DRONE_COMMIT_SHA} .
+  - /usr/local/bin/wait
+  - docker build -t spcr-test-reports:$${DRONE_COMMIT_SHA} .
   when:
     event:
     - push
 
-- name: image_to_quay
-  image: plugins/docker
-  settings:
-    registry: quay.io
-    repo: quay.io/ukhomeofficedigital/cop-test-reports
-    tags: ${DRONE_COMMIT_SHA}
+- name: vulnerability-scan
+  pull: always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
   environment:
-    DOCKER_PASSWORD:
-      from_secret: QUAY_PASSWORD
-    DOCKER_USERNAME:
-      from_secret: QUAY_USERNAME
+    IMAGE_NAME: spcr-test-reports:${DRONE_COMMIT_SHA}
+    LOCAL_IMAGE: true
+    TOLERATE: low
+    WHITELIST_FILE: whitelist
+  when:
+    event:
+    - push
+
+- name: dev_image_to_ecr
+  image: plugins/ecr
+  settings:
+    access_key:
+      from_secret: DEV_SPCR_TEST_REPORTS_AWS_ACCESS_KEY
+    registry: 340268328991.dkr.ecr.eu-west-2.amazonaws.com
+    repo: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/spcr/test-reports
+    secret_key:
+      from_secret: DEV_SPCR_TEST_REPORTS_AWS_SECRET_KEY
+    tags:
+    - ${DRONE_COMMIT_SHA}
+    - dev
+  environment:
+    AWS_REGION: eu-west-2
   when:
     branch:
     - master
@@ -56,50 +69,20 @@ steps:
 
 - name: deploy_to_dev
   pull: if-not-exists
-  image: quay.io/ukhomeofficedigital/kd
+  image: quay.io/ukhomeofficedigital/helm:latest
   commands:
-  - export IMAGE_TAG=${DRONE_COMMIT_SHA}
-  - export KEYCLOAK_URL=$${KEYCLOAK_PROTOCOL}$${DEV_KEYCLOAK_URL}
-  - kd --insecure-skip-tls-verify -f kube/secret.yml
-  - kd --insecure-skip-tls-verify -f kube/network-policy.yml
-  - kd --insecure-skip-tls-verify -f kube/service.yml
-  - kd --insecure-skip-tls-verify -f kube/deployment.yml --timeout=5m
-  - kd --insecure-skip-tls-verify -f kube/ingress.yml
+  - /run-helm.sh list -n spcr-dev
+  - helm upgrade --install spcr-test-reports ./helm -f ./helm/dev.yaml -n spcr-dev --dry-run
+  - helm upgrade --install spcr-test-reports ./helm -f ./helm/dev.yaml -n spcr-dev
   environment:
-    DEV_KEYCLOAK_URL:
-      from_secret: DEV_KEYCLOAK_URL
-    KEYCLOAK_CLIENT_ID:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_CLIENT_ID
-    KEYCLOAK_PROTOCOL:
-      from_secret: PROTOCOL_HTTPS
-    KEYCLOAK_REALM:
-      from_secret: DEV_KEYCLOAK_REALM
-    KEYCLOAK_SECRET:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SECRET
-    KEYCLOAK_SESSION_NAME:
-      from_secret: DEV_COP_TEST_REPORTS_KEYCLOAK_SESSION_NAME
-    KUBE_NAMESPACE:
-      from_secret: DEV_KUBE_NAMESPACE_PRIVATE_COP
+    KUBE_CERTIFICATE_AUTHORITY_DATA:
+      from_secret: DEV_SPCR_TEST_REPORTS_KUBE_CA_DATA
+    KUBE_CLUSTER_NAME:
+      from_secret: DEV_SPCR_TEST_REPORTS_KUBE_CLUSTER_NAME
     KUBE_SERVER:
-      from_secret: DEV_KUBE_SERVER
+      from_secret: DEV_SPCR_TEST_REPORTS_KUBE_SERVER
     KUBE_TOKEN:
-      from_secret: DEV_KUBE_TOKEN
-    NAME:
-      from_secret: DEV_COP_TEST_REPORTS_NAME
-    PORT:
-      from_secret: DEV_COP_TEST_REPORTS_PORT
-    S3_ACCESS_KEY_ID:
-      from_secret: TESTS_S3_ACCESS_KEY
-    S3_BUCKET:
-      from_secret: TESTS_S3_BUCKET_NAME
-    S3_SECRET_ACCESS_KEY:
-      from_secret: TESTS_S3_SECRET_KEY
-    S3_TEST_REPORT_PREFIX:
-      from_secret: DEV_COP_TEST_REPORTS_TEST_REPORT_PREFIX
-    URL:
-      from_secret: DEV_COP_TEST_REPORTS_URL
-    WHITELIST:
-      from_secret: DEV_WHITELIST
+      from_secret: DEV_SPCR_KUBE_TOKEN
   when:
     branch:
     - master
@@ -110,18 +93,20 @@ steps:
   pull: if-not-exists
   image: plugins/slack
   settings:
-    channel: cop-deployments
+    channel: spcr-deployments
     template: "{{#build.deployTo}}\n  *{{repo.name}} - Build {{build.number}} - {{uppercasefirst build.deployTo}} - {{uppercase build.status}}*\n  {{build.link}}\n{{else}}\n  *{{repo.name}} - Build {{build.number}} - Development - {{uppercase build.status}}*\n  {{build.link}}\n{{/build.deployTo}}\n"
     username: Drone Build Watcher
   environment:
     SLACK_WEBHOOK:
       from_secret: SLACK_WEBHOOK
+  failure: ignore
   when:
     branch:
     - master
+    - version-*
     event:
-    - push
     - promote
+    - push
     status:
     - success
     - failure
@@ -135,5 +120,4 @@ services:
   image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
   commands:
   - /run.sh server
-
 ...

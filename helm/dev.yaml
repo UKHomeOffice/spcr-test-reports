@@ -1,0 +1,137 @@
+# Default values for helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: spcr-dev
+replicaCount: 1
+
+image:
+  repository: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/spcr/test-reports
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "dev"
+  proxyRepository: "quay.io/ukhomeofficedigital/nginx-proxy:latest"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+security:
+  application:
+    podSecurityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1000
+  proxy:
+    securityContext:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+
+service:
+  type: ClusterIP
+  # Reverse proxy ports for service and container
+  port: &port 443
+  targetPort: 10443
+  # Application port
+  appPort: &appPort 3000
+
+ingress:
+  host: spcr-test-reports.dev.spcr.homeoffice.gov.uk
+  path: /
+  pathType: ImplementationSpecific
+  annotations:
+    cert-manager.io/enabled: "true"
+    ingress.kubernetes.io/backend-protocol: "HTTPS"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ingress.class: nginx-external
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 250Mi
+
+probes:
+  readinessProbe:
+    tcpPort:
+      port: *appPort
+    initialDelaySeconds: 10
+    periodSeconds: 3
+    failureThreshold: 5
+  livenessProbe:
+    tcpPort:
+      port: *appPort
+    initialDelaySeconds: 30
+    periodSeconds: 3
+    failureThreshold: 3
+
+env:
+  application:
+    - name: S3_TEST_REPORT_PREFIX
+      value: test-reports
+    - name: KEYCLOAK_SECRET
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_secret
+    - name: PORT
+      value: *appPort
+    - name: S3_BUCKET_NAME
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: name
+    - name: KEYCLOAK_SESSION_NAME
+      value: test_reporting_session
+    - name: S3_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: access_key_id
+    - name: S3_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: secret_access_key
+    - name: DEV_KEYCLOAK_URL
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_url
+    - name: KEYCLOAK_REALM
+      valueFrom:
+        secretKeyRef:
+        name: spcr-test-reports
+        key: keycloak_realm
+    - name: KEYCLOAK_CLIENT_ID
+      value: spcr-test-reports
+  proxy:
+  - name: PROXY_SERVICE_HOST
+    value: 'http://127.0.0.1'
+  - name: PROXY_SERVICE_PORT
+    value: *appPort
+  - name: SERVER_CERT
+    value: "/certs/tls.crt"
+  - name: SERVER_KEY
+    value: "/certs/tls.key"
+  - name: LOG_FORMAT_NAME
+    value: 'json'
+  - name: NAXSI_USE_DEFAULT_RULES
+    value: 'FALSE'
+  - name: ENABLE_UUID_PARAM
+    value: 'FALSE'
+  - name: STATSD_METRICS
+    value: "FALSE"
