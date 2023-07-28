@@ -50,7 +50,7 @@ steps:
       from_secret: QUAY_USERNAME
   when:
     branch:
-    - master
+    - main
     event:
     - push
 
@@ -102,7 +102,7 @@ steps:
       from_secret: DEV_WHITELIST
   when:
     branch:
-    - master
+    - main
     event:
     - push
 
@@ -118,7 +118,7 @@ steps:
       from_secret: SLACK_WEBHOOK
   when:
     branch:
-    - master
+    - main
     event:
     - push
     - promote
